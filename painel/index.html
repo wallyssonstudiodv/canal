@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel de Agendamento</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Painel de Agendamento</h1>
+    
+    <form id="formulario">
+      <input type="text" placeholder="ID do Vídeo do YouTube" id="videoId" required />
+      <input type="time" id="hora" required />
+      <textarea placeholder="IDs dos grupos (1 por linha)" id="grupos" required></textarea>
+      <button type="submit">Adicionar Agendamento</button>
+    </form>
+
+    <h2>Agendamentos</h2>
+    <ul id="lista"></ul>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
