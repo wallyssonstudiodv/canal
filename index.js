@@ -1,36 +1,52 @@
-const { default: makeWASocket, useSingleFileAuthState, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const {
+    default: makeWASocket,
+    useMultiFileAuthState,
+    fetchLatestBaileysVersion,
+    makeCacheableSignalKeyStore,
+    PHONENUMBER_MCC
+} = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 
-const { state, saveState } = useSingleFileAuthState('./auth.json');
-
 let configPath = path.join(__dirname, 'dados', 'config.json');
-let config = JSON.parse(fs.readFileSync(configPath));
 
 async function iniciarBot() {
+    const { state, saveCreds } = await useMultiFileAuthState('./auth'); // usa pasta, não arquivo
     const { version } = await fetchLatestBaileysVersion();
-    const sock = makeWASocket({
-        auth: state,
-        printQRInTerminal: true,
-        version
-    });
 
-    sock.ev.on('connection.update', update => {
-        const { connection, lastDisconnect } = update;
-        if (connection === 'close') {
-            const motivo = new Boom(lastDisconnect?.error)?.output?.statusCode;
-            if (motivo !== 401) {
-                iniciarBot();
-            }
+    const sock = makeWASocket({
+        version,
+        printQRInTerminal: true,
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, fs)
         }
     });
 
-    sock.ev.on('creds.update', saveState);
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect } = update;
+        if (connection === 'close') {
+            const motivo = new Boom(lastDisconnect?.error)?.output?.statusCode;
+            console.log('[⚠️] Conexão encerrada:', motivo);
+            if (motivo !== 401) {
+                iniciarBot();
+            } else {
+                console.log('[❌] Autenticação inválida. Delete a pasta "auth" e escaneie novamente.');
+            }
+        } else if (connection === 'open') {
+            console.log('[✅] Conectado com sucesso!');
+        }
+    });
+
+    sock.ev.on('creds.update', saveCreds);
 
     setInterval(async () => {
-        const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const horaAtual = new Date().toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
 
         const configAtualizada = JSON.parse(fs.readFileSync(configPath));
         for (const tarefa of configAtualizada.envios) {
@@ -51,4 +67,4 @@ async function iniciarBot() {
     }, 60000);
 }
 
-iniciarBot(); 
+iniciarBot();
