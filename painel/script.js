@@ -31,10 +31,20 @@ window.onload = () => {
   fetch('/dados/config.json')
     .then(res => res.json())
     .then(dados => {
-      dados.envios.forEach(tarefa => {
-        const item = document.createElement('li');
-        item.textContent = `📺 ${tarefa.videoId} - 🕒 ${tarefa.hora}`;
-        lista.appendChild(item);
+      dados.envios.forEach(envio => {
+        const li = document.createElement('li');
+        li.textContent = `Vídeo: ${envio.videoId} - Hora: ${envio.hora} - Grupos: ${envio.grupos.join(', ')}`;
+        lista.appendChild(li);
       });
     });
 };
+
+// ---- Receber e mostrar QR Code ----
+const socket = io();
+socket.on('qr', (qr) => {
+  const qrDiv = document.getElementById('qrcode');
+  qrDiv.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?data=' + encodeURIComponent(qr) + '&size=200x200';
+  qrDiv.appendChild(img);
+});
