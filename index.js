@@ -51,4 +51,4 @@ async function iniciarBot() {
     }, 60000);
 }
 
-iniciarBot();
+iniciarBot(); 
